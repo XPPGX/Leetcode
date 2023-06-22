@@ -14,7 +14,6 @@
 
 ## Usage
 ```bash
-# 進去裡面改input arr，然後
 $ gcc add_two_number_optimize_memory.c -o a
 $ ./a <num1> <num2>
 # 其中num1, num2可以是任何正整數。

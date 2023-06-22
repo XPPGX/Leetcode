@@ -83,66 +83,50 @@ void CreateTwoListNode(int _val_1, int _val_2, struct ListNode** _l1, struct Lis
 struct ListNode* addTwoNumbers(struct ListNode* l1, struct ListNode* l2){
     struct ListNode* ptr1;
     struct ListNode* ptr2;
-    struct ListNode* pre_ptr1;
-    struct ListNode* pre_ptr2;
+    struct ListNode* pre_current = NULL;
+    struct ListNode* current;
     int carry = 0;
-    for(ptr1 = l1, ptr2 = l2; ptr1->next != NULL, ptr2->next != NULL; ptr1 = ptr1->next, ptr2 = ptr2->next){
-        printf("ptr1->val = %d, ptr2->val = %d, ", ptr1->val, ptr2->val);
-        ptr1->val = ptr1->val + ptr2->val + carry;
-        if(ptr1->val >= 10){
-            carry = ptr1->val / 10;
-            ptr1->val = ptr1->val % 10;
-            printf("carry = %d, ", carry);
+    int sum = 0;
+    int lock = 1;
+    ptr1 = l1;
+    ptr2 = l2;
+    current = ptr1;
+    for(; ptr1 || ptr2; ){
+        sum = carry;
+        if(ptr1){
+            printf("ptr1->val = %d\t", ptr1->val);
+            sum = sum + ptr1->val;
+            ptr1 = ptr1->next;
         }
-        else{
-            carry = 0;
+        if(ptr2){
+            printf("ptr2->val = %d\t", ptr2->val);
+            sum = sum + ptr2->val;
+            ptr2 = ptr2->next;
         }
-        printf("digit_sum = %d\n", ptr1->val);
-        pre_ptr1 = ptr1;
-        pre_ptr2 = ptr2;
-        printf("pre_ptr1 = %p, ptr1->next = %p\n", pre_ptr1, ptr1->next);
-        printf("pre_ptr2 = %p, ptr2->next = %p\n", pre_ptr2, ptr2->next);
-    }
-    printf("after one is null : ptr1 = %p, ptr2 = %p\n\n", ptr1, ptr2);
+        carry = sum / 10;
+        printf("carry = %d\tsum = %d\n", carry, sum % 10);
+        current->val = sum % 10;
 
-    if(ptr1 == NULL){
-        printf("ptr1 is NULL\n");
-        printf("pre_ptr1 = %p, pre_ptr1->next = %p, ptr2 = %p\n", pre_ptr1, pre_ptr1->next, ptr2);
-        pre_ptr1->next = ptr2;
-        printf("after chained, pre_ptr1->next = %p, ptr2 = %p\n", pre_ptr1->next, ptr2);
-        printf("\n");
-        for(; ptr2 != NULL; ptr2 = ptr2->next){
-            printf("ptr2->val = %d, carry = %d\n", ptr2->val, carry);
-            ptr2->val = ptr2->val + carry;
-            if(ptr2->val >= 10){
-                carry = ptr2->val / 10;
-                ptr2->val = ptr2->val % 10;
+        pre_current = current;
+        current = current->next;
+
+        if(lock == 1){
+            if(!ptr1 && ptr2){
+                lock = 0;
+                printf("\n\n");
+                printf("ptr1 = %p, ptr2 = %p\n", ptr1, ptr2);
+                pre_current->next = ptr2;
+                current = ptr2;
             }
         }
-        if(carry > 0){
-            printf("carry still > 0\n");
-            ptr2 = (struct ListNode*)malloc(sizeof(struct ListNode*));
-            ptr2->val = carry;
-            ptr2->next = NULL;
-        }
     }
-    else if(ptr2 == NULL){
-        printf("ptr2 is NULL\n");
-        printf("pre_ptr1 = %p, pre_ptr1->next = %p\n", pre_ptr1, pre_ptr1->next);
-        for(; ptr1 != NULL; ptr1 = ptr1->next){
-            ptr1->val = ptr1->val + carry;
-            if(ptr1->val >= 10){
-                carry = ptr1->val / 10;
-                ptr1->val = ptr1->val % 10;
-            }
-        }
-        if(carry > 0){
-            ptr1 = (struct ListNode*)malloc(sizeof(struct ListNode*));
-            ptr1->val = carry;
-            ptr1->next = NULL;
-        }
+    if(carry > 0){
+        pre_current->next = (struct ListNode*)malloc(sizeof(struct ListNode));
+        pre_current = pre_current->next;
+        pre_current->val = carry;
+        pre_current->next = NULL;
     }
-    
+
     return l1;
 }
 

@@ -82,7 +82,7 @@ void CreateTwoListNode(int _val_1, int _val_2, struct ListNode** _l1, struct Lis
 }
 
 struct ListNode* addTwoNumbers(struct ListNode* l1, struct ListNode* l2){
-    
+    struct ListNode* ptr;
     return NULL;
 }
 

@@ -150,13 +150,13 @@ void RL_operation(struct Node** _root, struct Node* _node){
     RR_operation(_root, _node);
 }
 
-void trace_backward_to_balance_predecessor_node(struct Node** _root, struct Node* _leaf_node){
-    if(_leaf_node->parent == NULL){
+void trace_backward_to_balance_predecessor_node(struct Node** _root, struct Node* _node){
+    if(_node->parent == NULL){
         return;
     }
 
-    struct Node* parent_ptr = _leaf_node->parent;
-    for(parent_ptr = _leaf_node->parent ; parent_ptr != NULL ; parent_ptr = parent_ptr->parent){
+    struct Node* parent_ptr;
+    for(parent_ptr = _node ; parent_ptr != NULL ; parent_ptr = parent_ptr->parent){
         if(get_balance_factor(parent_ptr) > 1){ // L type
             printf("node %d has imbalanced subtrees\n", parent_ptr->primary_key);
             if(get_balance_factor(parent_ptr->left_child) == 1){ // L type
@@ -240,8 +240,106 @@ struct Node* BuildAVLTree(int* _input_data, int _input_size){
     return root;
 }
 
+struct Node* search(struct Node* _root, int _data){
+    struct Node* ptr;
+    for(ptr = _root ; ptr != NULL ;){
+        if(ptr->primary_key == _data){
+            printf("found %d, and depth(%d) = %d\n", ptr->primary_key, ptr->primary_key, ptr->depth);
+            return ptr;
+        }
+        else if(ptr->primary_key < _data){
+            ptr = ptr->right_child;
+        }
+        else{
+            ptr = ptr->left_child;
+        }
+    }
+    printf("node %d not found\n", _data);
+    return NULL;
+}
+
+void delete(struct Node** _root, int _data){
+    struct Node* aim_ptr = search(*_root, _data);
+    if(aim_ptr == NULL){
+        return;
+    }
+    struct Node* aim_ptr_parent = aim_ptr->parent;
+    if((aim_ptr->left_child == NULL) && (aim_ptr->right_child == NULL)){ //aim_ptr is leaf
+        if(aim_ptr_parent != NULL){ //aim_ptr is not root
+            if(aim_ptr_parent->left_child == aim_ptr){
+                aim_ptr_parent->left_child = NULL;
+            }
+            else{
+                aim_ptr_parent->right_child = NULL;
+            }
+            free(aim_ptr);
+            update_depth(aim_ptr_parent);
+            trace_backward_update_depth(aim_ptr_parent);
+            trace_backward_to_balance_predecessor_node(_root, aim_ptr_parent);
+        }
+        else{ //aim_ptr is root.
+            free(aim_ptr);
+            *_root = NULL;
+        }
+    }
+    else if((aim_ptr->left_child) && (aim_ptr->right_child == NULL)){ //aim_ptr has left_child but no right_child
+        if(aim_ptr_parent != NULL){ //aim_ptr is not root
+            if(aim_ptr_parent->left_child == aim_ptr){
+                aim_ptr_parent->left_child = aim_ptr->left_child;
+            }
+            else{
+                aim_ptr_parent->right_child = aim_ptr->left_child;
+            }
+            aim_ptr->left_child->parent = aim_ptr_parent;
+            free(aim_ptr);
+            update_depth(aim_ptr_parent);
+            trace_backward_update_depth(aim_ptr_parent);
+            trace_backward_to_balance_predecessor_node(_root, aim_ptr_parent);
+        }
+        else{ //aim_ptr is root
+            aim_ptr->left_child->parent = NULL;
+            *_root = aim_ptr->left_child;
+            free(aim_ptr);
+        }
+    }
+    else if((aim_ptr->left_child == NULL) && (aim_ptr->right_child)){ //aim_ptr has right_child but no left_child
+        if(aim_ptr_parent != NULL){ //aim_ptr is not root
+            if(aim_ptr_parent->left_child == aim_ptr){
+                aim_ptr_parent->left_child = aim_ptr->right_child;
+            }
+            else{
+                aim_ptr_parent->right_child = aim_ptr->right_child;
+            }
+            aim_ptr->right_child->parent = aim_ptr_parent;
+            free(aim_ptr);
+            update_depth(aim_ptr_parent);
+            trace_backward_update_depth(aim_ptr_parent);
+            trace_backward_to_balance_predecessor_node(_root, aim_ptr_parent);
+        }
+        else{ //aim_ptr is root
+            aim_ptr->right_child->parent = NULL;
+            *_root = aim_ptr->right_child;
+            free(aim_ptr);
+        }
+    }
+    else{ //aim_ptr has both left_child and right_child
+        //find max_key in left subtree
+        for(struct Node* left_subtree_max_ptr = aim_ptr->left_child ; left_subtree_max_ptr != NULL ; left_subtree_max_ptr = left_subtree_max_ptr->right_child){
+            
+        }
+
+        if(aim_ptr_parent != NULL){ //aim_ptr is not root
+            
+        }
+        else{ //aim_ptr is root
+        
+        }
+    }
+}
+
 void inorder_traverse(struct Node* _node){
     if(_node == NULL){
+        printf("NULL, ");
         return;
     }
     printf("%d, ", _node->primary_key);
@@ -254,17 +352,18 @@ int main(){
     struct Node* root = BuildAVLTree(input_data, 6);
     inorder_traverse(root);
     printf("\n");
-    int single_input = 0;
-    while(1){
-        printf("insert a key : ");
-        scanf("%d", &single_input);
-        if(single_input == -1){
-            break;
-        }
-        insert(&root, single_input);
-        inorder_traverse(root);
-        printf("\n");
-    }
+    struct Node* temp = search(root, 49);
+    // int single_input = 0;
+    // while(1){
+    //     printf("insert a key : ");
+    //     scanf("%d", &single_input);
+    //     if(single_input == -1){
+    //         break;
+    //     }
+    //     insert(&root, single_input);
+    //     inorder_traverse(root);
+    //     printf("\n");
+    // }
     
 }
 

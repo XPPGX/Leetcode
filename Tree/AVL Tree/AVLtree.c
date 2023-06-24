@@ -151,33 +151,34 @@ void RL_operation(struct Node** _root, struct Node* _node){
 }
 
 void trace_backward_to_balance_predecessor_node(struct Node** _root, struct Node* _node){
-    if(_node->parent == NULL){
+    if(_node == NULL){
+        printf("balancing : _node is root\n");
         return;
     }
 
-    struct Node* parent_ptr;
-    for(parent_ptr = _node ; parent_ptr != NULL ; parent_ptr = parent_ptr->parent){
-        if(get_balance_factor(parent_ptr) > 1){ // L type
-            printf("node %d has imbalanced subtrees\n", parent_ptr->primary_key);
-            if(get_balance_factor(parent_ptr->left_child) == 1){ // L type
+    struct Node* ptr;
+    for(ptr = _node ; ptr != NULL ; ptr = ptr->parent){
+        if(get_balance_factor(ptr) > 1){ // L type
+            printf("node %d has imbalanced subtrees\n", ptr->primary_key);
+            if(get_balance_factor(ptr->left_child) == 1){ // L type
                 printf("LL type do LL operation\n");
-                LL_operation(_root, parent_ptr);
+                LL_operation(_root, ptr);
             }
-            else{
+            else{ //maybe L type or R type will fall in this block
                 printf("LR type do LR operation\n");
-                LR_operation(_root, parent_ptr);
+                LR_operation(_root, ptr);
             }
             break;
         }
-        else if(get_balance_factor(parent_ptr) < -1){ // R type
-            printf("node %d has imbalanced subtrees\n", parent_ptr->primary_key);
-            if(get_balance_factor(parent_ptr->right_child) == -1){ // R type
+        else if(get_balance_factor(ptr) < -1){ // R type
+            printf("node %d has imbalanced subtrees\n", ptr->primary_key);
+            if(get_balance_factor(ptr->right_child) == -1){ // R type
                 printf("RR type do RR operation\n");
-                RR_operation(_root, parent_ptr);
+                RR_operation(_root, ptr);
             }
             else{ // L type
                 printf("RL type do RL operation\n");
-                RL_operation(_root, parent_ptr);
+                RL_operation(_root, ptr);
             }
             break;
         }
@@ -259,17 +260,23 @@ struct Node* search(struct Node* _root, int _data){
 }
 
 void delete(struct Node** _root, int _data){
+    printf("deleting : %d\n", _data);
     struct Node* aim_ptr = search(*_root, _data);
     if(aim_ptr == NULL){
         return;
     }
     struct Node* aim_ptr_parent = aim_ptr->parent;
+    printf("aim_ptr_parent = %p\n", aim_ptr_parent);
     if((aim_ptr->left_child == NULL) && (aim_ptr->right_child == NULL)){ //aim_ptr is leaf
+        printf("aim_ptr(%d) = %p is a leaf\n", aim_ptr->primary_key, aim_ptr);
         if(aim_ptr_parent != NULL){ //aim_ptr is not root
+            printf("%d is not root\n", aim_ptr->primary_key);
             if(aim_ptr_parent->left_child == aim_ptr){
+                printf("aim_ptr is a left_child\n");
                 aim_ptr_parent->left_child = NULL;
             }
             else{
+                printf("aim_ptr is a right_child\n");
                 aim_ptr_parent->right_child = NULL;
             }
             free(aim_ptr);
@@ -278,6 +285,7 @@ void delete(struct Node** _root, int _data){
             trace_backward_to_balance_predecessor_node(_root, aim_ptr_parent);
         }
         else{ //aim_ptr is root.
+            printf("%d is root\n", aim_ptr->primary_key);
             free(aim_ptr);
             *_root = NULL;
         }
@@ -323,17 +331,39 @@ void delete(struct Node** _root, int _data){
         }
     }
     else{ //aim_ptr has both left_child and right_child
-        //find max_key in left subtree
-        for(struct Node* left_subtree_max_ptr = aim_ptr->left_child ; left_subtree_max_ptr != NULL ; left_subtree_max_ptr = left_subtree_max_ptr->right_child){
-            
+        //find max_key in left subtree, the node with max_ley will not have right_child.
+        struct Node* left_subtree_max_ptr;
+        for(left_subtree_max_ptr = aim_ptr->left_child ; left_subtree_max_ptr->right_child != NULL ; left_subtree_max_ptr = left_subtree_max_ptr->right_child);
+        printf("find left_max %d, its addr = %p\n", left_subtree_max_ptr->primary_key, left_subtree_max_ptr);
+        //swap data
+        int temp_value = aim_ptr->primary_key;
+        aim_ptr->primary_key = left_subtree_max_ptr->primary_key;
+        left_subtree_max_ptr->primary_key = temp_value;
+        
+        //trace to the node which just be replaced to leaf and should be delete
+        aim_ptr = left_subtree_max_ptr;
+        printf("aim_ptr now = %p\n", aim_ptr);
+        aim_ptr_parent = aim_ptr->parent;
+        printf("aim_ptr_parent now = %p, its key = %d\n", aim_ptr_parent, aim_ptr_parent->primary_key);
+
+        //aim_ptr_parent is exist certainly, and aim_ptr just has left_child because aim_ptr is the most right.
+        //now aim_ptr is leaf.
+        if(aim_ptr_parent->left_child == aim_ptr){
+            printf("aim_ptr is a left_child\n");
+            aim_ptr_parent->left_child = aim_ptr->left_child;
+        }
+        else{
+            printf("aim_ptr is a right_child\n");
+            aim_ptr_parent->right_child = aim_ptr->left_child;
         }
 
-        if(aim_ptr_parent != NULL){ //aim_ptr is not root
-            
+        if(aim_ptr->left_child){
+            aim_ptr->left_child->parent = aim_ptr_parent;
         }
-        else{ //aim_ptr is root
-        
-        }
+        free(aim_ptr);
+        update_depth(aim_ptr_parent);
+        trace_backward_update_depth(aim_ptr_parent);
+        trace_backward_to_balance_predecessor_node(_root, aim_ptr_parent);
     }
 }
 
@@ -351,8 +381,25 @@ int main(){
     int input_data[10] = {10, 20, 40, 32, 39, 49};
     struct Node* root = BuildAVLTree(input_data, 6);
     inorder_traverse(root);
-    printf("\n");
-    struct Node* temp = search(root, 49);
+    printf("\n\n");
+    delete(&root, 40);
+    inorder_traverse(root);
+    printf("\n\n");
+    delete(&root, 49);
+    inorder_traverse(root);
+    printf("\n\n");
+    delete(&root, 10);
+    inorder_traverse(root);
+    printf("\n\n");
+    delete(&root, 32);
+    inorder_traverse(root);
+    printf("\n\n");
+    delete(&root, 20);
+    inorder_traverse(root);
+    printf("\n\n");
+    delete(&root, 39);
+    inorder_traverse(root);
+    printf("\n\n");
     // int single_input = 0;
     // while(1){
     //     printf("insert a key : ");
@@ -362,8 +409,7 @@ int main(){
     //     }
     //     insert(&root, single_input);
     //     inorder_traverse(root);
-    //     printf("\n");
+    //     printf("\n\n");
     // }
-    
 }
 

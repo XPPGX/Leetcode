@@ -121,8 +121,6 @@ int Trace_Up_Operation(struct Node* _node, int _current_total_light, int _thresh
         return 0;
     }
 }
-
-
 int Find_Nodes_Should_Be_Cut(struct Node* _root, int _threshold, int* _cut_node1, int* _cut_node2){
     printf("current_node = %d, light(%d) = %d\n", _root->label, _root->label, _root->light);
     int current_total_light = 0;

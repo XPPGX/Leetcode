@@ -8,6 +8,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+// #define _DEBUG_
+
 struct Node{
     int parent;
     int label;
@@ -21,11 +23,17 @@ void Get_Row_Data(char* _row, int* _node_parent, int* _node_light){
     
     token = strtok(_row, " ");
     *_node_parent = atoi(token);
+
+    #ifdef _DEBUG_
     printf("parent = %d, ", *_node_parent);
+    #endif
 
     token = strtok(NULL, " ");
     *_node_light = atoi(token);
+
+    #ifdef _DEBUG_
     printf("node_light = %d\n", *_node_light);
+    #endif
 }
 
 struct Node* Build_Tree(char* _dataset, struct Node** _nodes, int* _total_light, int* _threshold){
@@ -37,7 +45,11 @@ struct Node* Build_Tree(char* _dataset, struct Node** _nodes, int* _total_light,
     }
     char row[256];
     fgets(row, 256, fptr);
-    printf("%s\n", row);
+    
+    #ifdef _DEBUG_ //列印第一row，判斷是否有讀到檔案
+    printf("%s\n", row); 
+    #endif
+
     int nodes_num = atoi(row);
     printf("nodes_num = %d\n", nodes_num);
     
@@ -71,7 +83,11 @@ struct Node* Build_Tree(char* _dataset, struct Node** _nodes, int* _total_light,
     int current_parent = -1;
     printf("\n");
     for(int node_label = 1 ; node_label <= nodes_num ; node_label++){ //O(N)
+
+        #ifdef _DEBUG_
         printf("current_node = %d, ", node_label);
+        #endif
+
         current_parent = nodes[node_label].parent;
         if(current_parent == 0){
             root = &nodes[node_label];
@@ -79,12 +95,20 @@ struct Node* Build_Tree(char* _dataset, struct Node** _nodes, int* _total_light,
         }
         if(nodes[current_parent].left_child == NULL){
             nodes[current_parent].left_child = &nodes[node_label];
+            
+            #ifdef _DEBUG_
             printf("current_parent = %d, left(%d) = %d\n", current_parent, current_parent, nodes[node_label].label);
+            #endif
+
             continue;
         }
         if(nodes[current_parent].right_child == NULL){
             nodes[current_parent].right_child = &nodes[node_label];
+            
+            #ifdef _DEBUG_
             printf("current_parent = %d, right(%d) = %d\n", current_parent, current_parent, nodes[node_label].label);
+            #endif
+
             continue;
         }
     }
@@ -94,7 +118,11 @@ struct Node* Build_Tree(char* _dataset, struct Node** _nodes, int* _total_light,
 
 int Trace_Up_Operation(struct Node* _node, int _current_total_light, int _threshold, int* _cut_node1, int* _cut_node2){
     if(_current_total_light < _threshold){
+
+        #ifdef _DEBUG_
         printf("current_node = %d, should keep trace up\n", _node->label);
+        #endif
+
         return _current_total_light;
     }
     else if(_current_total_light > _threshold){
@@ -104,12 +132,18 @@ int Trace_Up_Operation(struct Node* _node, int _current_total_light, int _thresh
          * 造成child必須要切(因為_node.light > threshold)，而child又不能切(因為child不足以當成獨立的partition)。
          * 所以沒有任何切法滿足這個樹。
          * */
+        #ifdef _DEBUG_
         printf("current_node = %d, current_total_light = %d\n", _node->label, _current_total_light);
+        #endif
+
         printf("ans = -1\n");
         exit(1); //exit the program
     }
     else{ //current_total_light == threshold
+        #ifdef _DEBUG_
         printf("!!!!! cut node %d, current_total_light = %d\n\n\n", _node->label, _current_total_light);
+        #endif
+
         if(*_cut_node1 == -1){
             *_cut_node1 = _node->label;
         }
@@ -122,29 +156,47 @@ int Trace_Up_Operation(struct Node* _node, int _current_total_light, int _thresh
     }
 }
 int Find_Nodes_Should_Be_Cut(struct Node* _root, int _threshold, int* _cut_node1, int* _cut_node2){
+    #ifdef _DEBUG_
     printf("current_node = %d, light(%d) = %d\n", _root->label, _root->label, _root->light);
+    #endif
     int current_total_light = 0;
     if(_root->left_child != NULL && _root->right_child != NULL){
         current_total_light = _root->light + Find_Nodes_Should_Be_Cut(_root->left_child, _threshold, _cut_node1, _cut_node2) + Find_Nodes_Should_Be_Cut(_root->right_child, _threshold, _cut_node1, _cut_node2);
+        
+        #ifdef _DEBUG_
         printf("current_node = %d, total_light = %d\n", _root->label, current_total_light);
+        #endif
+        
         return Trace_Up_Operation(_root, current_total_light, _threshold, _cut_node1, _cut_node2);
         //return current_total_light;
     }
     else if(_root->left_child != NULL && _root->right_child == NULL){
         current_total_light = _root->light + Find_Nodes_Should_Be_Cut(_root->left_child, _threshold, _cut_node1, _cut_node2);
+
+        #ifdef _DEBUG_
         printf("current_node = %d, total_light = %d\n", _root->label, current_total_light);
+        #endif
+
         return Trace_Up_Operation(_root, current_total_light, _threshold, _cut_node1, _cut_node2);
         //return current_total_light;
     }
     else if(_root->left_child == NULL && _root->right_child != NULL){
         current_total_light = _root->light + Find_Nodes_Should_Be_Cut(_root->right_child, _threshold, _cut_node1, _cut_node2);
+        
+        #ifdef _DEBUG_
         printf("current_node = %d, total_light = %d\n", _root->label, current_total_light);
+        #endif
+
         return Trace_Up_Operation(_root, current_total_light, _threshold, _cut_node1, _cut_node2);
         //return current_total_light;
     }
     else{
         current_total_light = _root->light;
+
+        #ifdef _DEBUG_
         printf("current_node = %d, total_light = %d\n", _root->label, current_total_light);
+        #endif
+        
         return Trace_Up_Operation(_root, current_total_light, _threshold, _cut_node1, _cut_node2);
         //return current_total_light;
     }
@@ -170,9 +222,40 @@ int Light_Of_Tree(struct Node* _node){
     }
 }
 
-void check_ans(int _sum_light_of_node1, int _sum_light_of_node2, int _threshold){
-    if(_sum_light_of_node1 == _threshold && _sum_light_of_node2 == _threshold){
-        printf("anwser is correct\n");
+void check_ans(struct Node* _nodes_arr, int cut_node1, int cut_node2, int _threshold){
+    struct Node* cut_node1_addr = &_nodes_arr[cut_node1];
+    struct Node* cut_node2_addr = &_nodes_arr[cut_node2];
+
+    int parentOfCutNode1 = _nodes_arr[cut_node1].parent;
+    int parentOfCutNode2 = _nodes_arr[cut_node2].parent;
+    struct Node* parentOfCutNode1_addr = &_nodes_arr[parentOfCutNode1];
+    struct Node* parentOfCutNode2_addr = &_nodes_arr[parentOfCutNode2];
+
+    //切開cut_node1與parent的連線
+    if(_nodes_arr[parentOfCutNode1].left_child->label == cut_node1){
+        _nodes_arr[parentOfCutNode1].left_child = NULL;
+    }
+    else if(_nodes_arr[parentOfCutNode1].right_child->label == cut_node1){
+        _nodes_arr[parentOfCutNode1].right_child = NULL;
+    }
+
+    //切開cut_node2與parent的連線
+    if(_nodes_arr[parentOfCutNode2].left_child->label == cut_node2){
+        _nodes_arr[parentOfCutNode2].left_child = NULL;
+    }
+    else if(_nodes_arr[parentOfCutNode2].right_child->label == cut_node2){
+        _nodes_arr[parentOfCutNode2].right_child = NULL;
+    }
+
+    int sumLightOfCutNode1 = Light_Of_Tree(cut_node1_addr);
+    int sumLightOfCutNode2 = Light_Of_Tree(cut_node2_addr);
+    printf("cummulative_light(%d) = %d, cummulative_light(%d) = %d\n", cut_node1, sumLightOfCutNode1, cut_node2, sumLightOfCutNode2);
+
+    if(sumLightOfCutNode1 == _threshold && sumLightOfCutNode2 == _threshold){
+        printf("answser is correct\n");
+    }
+    else{
+        printf("answer is wrong\n");
     }
 }
 
@@ -188,6 +271,7 @@ void Post_Order_Traverse_Print_Label(struct Node* _root){
 
 int main(int argc, char* argv[]){
     char* dataset = argv[1];
+    char* mode = argv[2];
     printf("dataset = %s\n", dataset);
     int total_light = 0;
     int threshold = 0;
@@ -195,23 +279,35 @@ int main(int argc, char* argv[]){
     struct Node* root = Build_Tree(dataset, &nodes_arr, &total_light, &threshold);
     int cut_node1 = -1;
     int cut_node2 = -1;
-    printf("=============\n");
-    printf("root = %d, addr(root) = %p, root->left_child = %p, root->right_child = %p\n", root->label, root, root->left_child, root->right_child);
-    printf("left = %d, right = %d\n", root->left_child->label, root->right_child->label);
-    printf("root = %d: \n", root->label);
-    printf("\troot->parent = %d\n", root->parent);
-    printf("\troot->light = %d\n", root->light);
-    Post_Order_Traverse_Print_Label(root);
-    printf("\n");
-    printf("\n\n=======================\n");
-    printf("==Checking...\n");
-    int lights = Find_Nodes_Should_Be_Cut(root, threshold, &cut_node1, &cut_node2);
-    printf("lights = %d\n", lights);
+    if(strcmp(mode, "run") == 0){ //如果argv[2]不是ans，則
+        printf("=======================\n");
+        printf("[Show] some information of dataset...\n");
+        printf("root = %d, addr(root) = %p, root->left_child = %p, root->right_child = %p\n", root->label, root, root->left_child, root->right_child);
+        printf("left = %d, right = %d\n", root->left_child->label, root->right_child->label);
+        printf("root = %d: \n", root->label);
+        printf("\troot->parent = %d\n", root->parent);
+        printf("\troot->light = %d\n", root->light);
+        #ifdef _DEBUG_
+        Post_Order_Traverse_Print_Label(root);
+        #endif
+        printf("\n");
+        printf("=======================\n");
 
-    printf("======anwser======\n");
-    printf("cut_node1 = %d, cut_node2 = %d\n", cut_node1, cut_node2);
-    int cummulative_light_node1 = Light_Of_Tree(&nodes_arr[cut_node1]);
-    int cummulative_light_node2 = Light_Of_Tree(&nodes_arr[cut_node2]);
-    printf("cummulative_light(%d) = %d, cummulative_light(%d) = %d\n", cut_node1, cummulative_light_node1, cut_node2, cummulative_light_node2);
-    check_ans(cummulative_light_node1, cummulative_light_node2, threshold);
+        printf("[Finding]...\n");
+        int lights = Find_Nodes_Should_Be_Cut(root, threshold, &cut_node1, &cut_node2);
+        printf("Find : cut_node1 = %d, cut_node2 = %d\n", cut_node1, cut_node2);
+
+        printf("=======================\n");
+        printf("[Ans] checking the answer is correct or not...\n");
+        printf("cut_node1 = %d, cut_node2 = %d\n", cut_node1, cut_node2);
+        check_ans(nodes_arr, cut_node1, cut_node2, threshold);
+    }
+    else if(strcmp(mode, "ans") == 0){ //如果argv[2]是ans，則
+        cut_node1 = atoi(argv[3]);
+        cut_node2 = atoi(argv[4]);
+        printf("=======================\n");
+        printf("[Ans] checking the answer is correct or not...\n");
+        printf("cut_node1 = %d, cut_node2 = %d\n", cut_node1, cut_node2);
+        check_ans(nodes_arr, cut_node1, cut_node2, threshold);
+    }
 }

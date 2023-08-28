@@ -5,14 +5,27 @@
 ## Run on dataset
 ```bash
 #get answer
-$./a <dataset_path>
-#example of get answer
-$./a dataset1.txt
+$./b <dataset_path> run
+#example of getting answer
+$./b dataset1.txt run
+
+#check answer
+$./b <dataset_path> <ans> <cut_node1> <cut_node2>
+#example of checking answer
+$./b dataset1.txt ans 3 5
 
 #anwsers of datasets
+---
+# 0 <= node size <= 100
 dataset 1 : 1, 4
 dataset 2 : -1 (the total lights cannot be devided into 3 part)
 dataset 3 : -1 (devided into 3 part, but no successful cut found)
+
+# node size >= 100
+dataset 4 : 63, 53
+dataset 5 : 44, 49
+dataset 6 : -1 (devided into 3 part, but no successful cut found)
+dataset 7 : -1 (devided into 3 part, but no successful cut found)
 ```
 
 ## Create Dataset

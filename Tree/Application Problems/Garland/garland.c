@@ -36,7 +36,7 @@ void Get_Row_Data(char* _row, int* _node_parent, int* _node_light){
     #endif
 }
 
-struct Node* Build_Tree(char* _dataset, struct Node** _nodes, int* _total_light, int* _threshold){
+struct Node* Build_Tree(char* _dataset, struct Node** _nodes, int* _total_light, int* _threshold, int* _ansFlag){
     FILE* fptr;
     fptr = fopen(_dataset, "r");
     if(fptr == NULL){
@@ -72,7 +72,8 @@ struct Node* Build_Tree(char* _dataset, struct Node** _nodes, int* _total_light,
     //check if it can be devided into 3 partitions
     if(*_total_light % 3 != 0){
         printf("the garland cannot be devided into 3 partitions\n");
-        exit(1);
+        *_ansFlag = 1;
+        return NULL;
     }
     else{
         *_threshold = *_total_light / 3;
@@ -230,20 +231,19 @@ void check_ans(struct Node* _nodes_arr, int cut_node1, int cut_node2, int _thres
     int parentOfCutNode2 = _nodes_arr[cut_node2].parent;
     struct Node* parentOfCutNode1_addr = &_nodes_arr[parentOfCutNode1];
     struct Node* parentOfCutNode2_addr = &_nodes_arr[parentOfCutNode2];
-
     //切開cut_node1與parent的連線
-    if(_nodes_arr[parentOfCutNode1].left_child->label == cut_node1){
+    if(_nodes_arr[parentOfCutNode1].left_child == cut_node1_addr){
         _nodes_arr[parentOfCutNode1].left_child = NULL;
     }
-    else if(_nodes_arr[parentOfCutNode1].right_child->label == cut_node1){
+    else if(_nodes_arr[parentOfCutNode1].right_child == cut_node1_addr){
         _nodes_arr[parentOfCutNode1].right_child = NULL;
     }
 
     //切開cut_node2與parent的連線
-    if(_nodes_arr[parentOfCutNode2].left_child->label == cut_node2){
+    if(_nodes_arr[parentOfCutNode2].left_child == cut_node2_addr){
         _nodes_arr[parentOfCutNode2].left_child = NULL;
     }
-    else if(_nodes_arr[parentOfCutNode2].right_child->label == cut_node2){
+    else if(_nodes_arr[parentOfCutNode2].right_child == cut_node2_addr){
         _nodes_arr[parentOfCutNode2].right_child = NULL;
     }
 
@@ -275,8 +275,13 @@ int main(int argc, char* argv[]){
     printf("dataset = %s\n", dataset);
     int total_light = 0;
     int threshold = 0;
+    int ansFlag = 0; // 0代表total light需要走訪才能知道是否能分割成三部分，1代表total light不是3的倍數。
     struct Node* nodes_arr;
-    struct Node* root = Build_Tree(dataset, &nodes_arr, &total_light, &threshold);
+    struct Node* root = Build_Tree(dataset, &nodes_arr, &total_light, &threshold, &ansFlag);
+    if(ansFlag == 1){
+        printf("-1\n");
+        return 0;
+    }
     int cut_node1 = -1;
     int cut_node2 = -1;
     if(strcmp(mode, "run") == 0){ //如果argv[2]不是ans，則
